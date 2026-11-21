@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>💰 Money OS</title>
+<style>
+  :root { --bg:#f7f6f3; --card:#fff; --ink:#37352f; --muted:#787774; --line:#e9e9e7; --ok:#0f7b6c; --bad:#e03e3e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:480px; margin:0 auto; padding:20px 16px 80px; }
+  h1 { font-size:22px; margin:0 0 12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .label { color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
+  .big { font-size:40px; font-weight:700; margin-top:4px; }
+  .big.neg { color:var(--bad); }
+  .sub { color:var(--muted); font-size:14px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  button { font:inherit; border:1px solid var(--line); background:var(--card); border-radius:12px; padding:18px 10px; font-size:18px; font-weight:600; cursor:pointer; }
+  button:active { transform:scale(.97); background:#f1f1ef; }
+  button.primary { background:var(--ink); color:#fff; border-color:var(--ink); }
+  button.wide { grid-column:1 / -1; }
+  input, select, textarea { font:inherit; width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:18px; background:#fff; }
+  textarea { font-size:15px; min-height:110px; }
+  .row { display:flex; gap:10px; margin-top:10px; }
+  .row > * { flex:1; }
+  .hidden { display:none !important; }
+  ul { padding-left:20px; margin:8px 0 0; }
+  li { margin:6px 0; }
+  #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:12px 18px; border-radius:10px; max-width:90%; opacity:0; transition:opacity .2s; pointer-events:none; }
+  #toast.show { opacity:1; }
+  #toast.err { background:var(--bad); }
+  a { color:inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>💰 Money OS</h1>
+
+  <div class="card">
+    <div class="label">Left to Spend this month</div>
+    <div class="big" id="left">…</div>
+    <div class="sub" id="spent"></div>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:10px">Quick add</div>
+    <div class="grid" id="buttons"></div>
+    <div id="amountPanel" class="hidden" style="margin-top:12px">
+      <div class="sub" id="amountTitle"></div>
+      <div class="row">
+        <input id="amount" type="number" inputmode="numeric" min="1" placeholder="Amount ৳">
+      </div>
+      <div class="row">
+        <button id="cancelAmount">Cancel</button>
+        <button id="saveAmount" class="primary">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button id="coachBtn" class="wide" style="width:100%">🧠 Refresh coach</button>
+    <ul id="coachLines"></ul>
+    <div class="sub" id="coachLink"></div>
+  </div>
+
+  <div class="sub" style="text-align:center"><a href="#" id="resetPin">Change PIN</a></div>
+</main>
+<div id="toast"></div>
+
+<script type="module">
+const CATS = {
+  snacks: '🥤 Snacks & Drinks', rides: '🚗 Rides', food: '🍛 Food', study: '📚 Study', other: '🎁 Other',
+};
+const BUTTONS = [
+  { label: '🥤 Coke ৳40', name: 'Coke', category: CATS.snacks, amount: 40 },
+  { label: '🚗 Ride', name: 'Ride', category: CATS.rides },
+  { label: '🍛 Food', name: 'Food', category: CATS.food },
+  { label: '📚 Study', name: 'Study', category: CATS.study },
+  { label: '🎁 Other', name: 'Other', category: CATS.other },
+];
+const $ = (id) => document.getElementById(id);
+const taka = (n) => `${Math.round(n) < 0 ? '-' : ''}৳${Math.abs(Math.round(n)).toLocaleString('en-US')}`;
+
+const store = {
+  get() { try { return localStorage.getItem('money-pin') || ''; } catch { return this.mem || ''; } },
+  set(v) { this.mem = v; try { localStorage.setItem('money-pin', v); } catch {} },
+  clear() { this.mem = ''; try { localStorage.removeItem('money-pin'); } catch {} },
+};
+function pin() {
+  let p = store.get();
+  while (!p) { p = (prompt('Enter your Money OS PIN') || '').trim(); if (p) store.set(p); else break; }
+  return p;
+}
+
+let toastTimer;
+function toast(msg, err = false) {
+  const t = $('toast');
+  t.textContent = msg; t.className = `show${err ? ' err' : ''}`;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.className = ''), 3000);
+}
+
+async function api(path, body) {
+  let res;
+  try {
+    res = await fetch(`/api/${path}`, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'x-pin': pin(), 'content-type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch { throw new Error('No connection. Check your internet and try again.'); }
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { store.clear(); throw new Error('Wrong PIN. Tap again to re-enter it.'); }
+  if (!res.ok) throw new Error(data.error || `Something went wrong (${res.status}).`);
+  return data;
+}
+
+function showLeft(left, spent) {
+  $('left').textContent = taka(left);
+  $('left').classList.toggle('neg', left < 0);
+  if (spent !== undefined) $('spent').textContent = `Spent so far: ${taka(spent)}`;
+}
+
+async function refresh() {
+  try { const s = await api('summary'); showLeft(s.leftToSpend, s.spentThisMonth); }
+  catch (e) { $('left').textContent = '—'; toast(e.message, true); }
+}
+
+let busy = false;
+async function add(item) {
+  if (busy) return; busy = true;
+  try {
+    const r = await api('add', item);
+    showLeft(r.leftToSpend);
+    toast(`Added ${item.label ?? item.name} ${taka(item.amount)}`);
+    setTimeout(refresh, 6000);
+    return true;
+  } catch (e) { toast(e.message, true); return false; }
+  finally { busy = false; }
+}
+
+let pending = null;
+for (const b of BUTTONS) {
+  const el = document.createElement('button');
+  el.textContent = b.label;
+  el.onclick = () => {
+    if (b.amount) return add({ name: b.name, category: b.category, amount: b.amount, label: '🥤 Coke' });
+    pending = b;
+    $('amountTitle').textContent = `${b.label}: how much?`;
+    $('amountPanel').classList.remove('hidden');
+    $('amount').value = ''; $('amount').focus();
+  };
+  $('buttons').appendChild(el);
+}
+$('cancelAmount').onclick = () => { pending = null; $('amountPanel').classList.add('hidden'); };
+$('saveAmount').onclick = async () => {
+  const amount = Number($('amount').value);
+  if (!pending || !(amount > 0)) return toast('Enter an amount above ৳0.', true);
+  if (await add({ name: pending.name, category: pending.category, amount, label: pending.label })) {
+    pending = null; $('amountPanel').classList.add('hidden');
+  }
+};
+$('amount').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('saveAmount').click(); });
+
+$('coachBtn').onclick = async () => {
+  $('coachBtn').disabled = true; $('coachBtn').textContent = '🧠 Thinking…';
+  try {
+    const { lines, url } = await api('coach', {});
+    $('coachLines').innerHTML = '';
+    for (const l of lines) { const li = document.createElement('li'); li.textContent = l; $('coachLines').appendChild(li); }
+    $('coachLink').innerHTML = '';
+    const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.textContent = 'Open in Notion →';
+    $('coachLink').appendChild(a);
+  } catch (e) { toast(e.message, true); }
+  finally { $('coachBtn').disabled = false; $('coachBtn').textContent = '🧠 Refresh coach'; }
+};
+$('resetPin').onclick = (e) => { e.preventDefault(); store.clear(); pin(); refresh(); };
+
+refresh();
+</script>
+</body>
+</html>

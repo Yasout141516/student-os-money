@@ -67,3 +67,37 @@ export const values = {
   checkbox: (b) => ({ checkbox: b }),
   relation: (...ids) => ({ relation: ids.map((id) => ({ id })) }),
 };
+
+export function todayIn(timeZone = process.env.TZ_NAME || 'Asia/Dhaka', now = new Date()) {
+  return now.toLocaleDateString('en-CA', { timeZone });
+}
+
+export async function addExpense(notion, ids, { name, amount, category, paidWith }) {
+  const amt = Number(amount);
+  if (!name || !Number.isFinite(amt) || amt <= 0) throw new Error('Expense needs a name and a positive amount.');
+  const cats = await notion.dataSources.query({
+    data_source_id: ids.CATEGORIES_DS_ID,
+    filter: { property: 'Name', title: { equals: category } },
+    page_size: 1,
+  });
+  if (!cats.results.length) throw new Error(`Category "${category}" not found in Notion.`);
+  const properties = {
+    Name: values.title(String(name).slice(0, 100)),
+    'Amount (৳)': values.number(amt),
+    Date: values.date(todayIn()),
+    Category: values.relation(cats.results[0].id),
+    Wallet: values.relation(ids.WALLET_PAGE_ID),
+  };
+  if (paidWith) properties['Paid With'] = values.select(paidWith);
+  await createRow(notion, ids.EXPENSES_DS_ID, properties);
+  return { ok: true };
+}
+
+export async function readSummary(notion, ids) {
+  const wallet = await notion.pages.retrieve({ page_id: ids.WALLET_PAGE_ID });
+  const num = (p) => (p?.type === 'formula' ? p.formula.number : p?.rollup?.number) ?? 0;
+  return {
+    leftToSpend: num(wallet.properties['Left to Spend (৳)']),
+    spentThisMonth: num(wallet.properties['Spent This Month (৳)']),
+  };
+}

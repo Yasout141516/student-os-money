@@ -12,6 +12,7 @@
     "check": "node src/check-rollup.js",
     "ids": "node src/print-ids.js",
     "coach": "node src/coach-run.js",
+    "dev": "node dev-server.js",
     "test": "node --test"
   },
   "license": "MIT",
