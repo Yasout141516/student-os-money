@@ -1,0 +1,13 @@
+# Sample bKash SMS in common formats (numbers masked). Replace/extend with real ones.
+# Each block: SMS text, then a line "# expect: {json}". Blocks separated by ---.
+You have paid Tk 1,250.00 to Pathao Ltd. Fee Tk 0.00. Balance Tk 3,420.50. TrxID BKA1B2C3D4 at 21/11/2026 10:15
+# expect: {"amount":1250,"merchant":"Pathao Ltd","trxId":"BKA1B2C3D4","kind":"payment"}
+---
+Payment Tk 349.00 to Foodpanda successful. Fee Tk 0.00. Balance Tk 3,071.50. TrxID BKE5F6G7H8 at 20/11/2026 13:40
+# expect: {"amount":349,"merchant":"Foodpanda","trxId":"BKE5F6G7H8","kind":"payment"}
+---
+Send Money Tk 500.00 to 01XXXXXXXXX successful. Ref lunch. Fee Tk 5.00. Balance Tk 2,566.50. TrxID BKJ9K0L1M2 at 19/11/2026 19:02
+# expect: {"amount":500,"merchant":"01XXXXXXXXX","trxId":"BKJ9K0L1M2","kind":"payment"}
+---
+You have received Tk 1,000.00 from 01XXXXXXXXX. Fee Tk 0.00. Balance Tk 3,566.50. TrxID BKN3P4Q5R6 at 18/11/2026 09:30
+# expect: {"amount":1000,"merchant":"01XXXXXXXXX","trxId":"BKN3P4Q5R6","kind":"received"}

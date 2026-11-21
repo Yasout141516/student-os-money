@@ -59,6 +59,22 @@
   </div>
 
   <div class="card">
+    <div class="label" style="margin-bottom:10px">📩 Paste bKash SMS</div>
+    <textarea id="smsText" placeholder="You have paid Tk 250.00 to Pathao Ltd. Fee Tk 0.00. TrxID …"></textarea>
+    <div class="row"><button id="readSms">Read SMS</button></div>
+    <div id="smsPreview" class="hidden" style="margin-top:12px">
+      <div class="sub" id="smsNote"></div>
+      <div class="row"><input id="smsAmount" type="number" inputmode="decimal" min="1" placeholder="Amount ৳"></div>
+      <div class="row"><input id="smsName" placeholder="What was it?"></div>
+      <div class="row"><select id="smsCategory"></select></div>
+      <div class="row">
+        <button id="smsCancel">Cancel</button>
+        <button id="smsSave" class="primary">Save to Notion</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
     <button id="coachBtn" class="wide" style="width:100%">🧠 Refresh coach</button>
     <ul id="coachLines"></ul>
     <div class="sub" id="coachLink"></div>
@@ -69,6 +85,7 @@
 <div id="toast"></div>
 
 <script type="module">
+import { parseSms, guessCategory } from './sms.js';
 const CATS = {
   snacks: '🥤 Snacks & Drinks', rides: '🚗 Rides', food: '🍛 Food', study: '📚 Study', other: '🎁 Other',
 };
@@ -175,6 +192,35 @@ $('coachBtn').onclick = async () => {
   finally { $('coachBtn').disabled = false; $('coachBtn').textContent = '🧠 Refresh coach'; }
 };
 $('resetPin').onclick = (e) => { e.preventDefault(); store.clear(); pin(); refresh(); };
+
+const ALL_CATS = ['🥤 Snacks & Drinks', '🚗 Rides', '📺 Subscriptions', '🍛 Food', '📚 Study', '🎁 Other'];
+for (const c of ALL_CATS) $('smsCategory').add(new Option(c, c));
+$('readSms').onclick = () => {
+  const r = parseSms($('smsText').value);
+  $('smsPreview').classList.remove('hidden');
+  $('smsSave').classList.remove('hidden');
+  if (r.kind === 'unknown') {
+    $('smsNote').textContent = "Couldn't read this SMS — enter it manually.";
+    $('smsAmount').value = ''; $('smsName').value = ''; $('smsCategory').value = '🎁 Other';
+  } else if (r.kind === 'received') {
+    $('smsNote').textContent = `Money received: ${taka(r.amount)}${r.merchant ? ` from ${r.merchant}` : ''}. Log it in Notion's Income database.`;
+    $('smsSave').classList.add('hidden');
+    $('smsAmount').value = r.amount; $('smsName').value = r.merchant || '';
+  } else {
+    $('smsNote').textContent = `Check and edit, then save.${r.trxId ? ` TrxID ${r.trxId}` : ''}`;
+    $('smsAmount').value = r.amount; $('smsName').value = r.merchant || 'bKash payment';
+    $('smsCategory').value = guessCategory(r.merchant);
+  }
+};
+$('smsCancel').onclick = () => $('smsPreview').classList.add('hidden');
+$('smsSave').onclick = async () => {
+  const amount = Number($('smsAmount').value);
+  const name = $('smsName').value.trim();
+  if (!(amount > 0) || !name) return toast('Enter a name and an amount above ৳0.', true);
+  if (await add({ name, amount, category: $('smsCategory').value, paidWith: 'bKash' })) {
+    $('smsPreview').classList.add('hidden'); $('smsText').value = '';
+  }
+};
 
 refresh();
 </script>
