@@ -1,9 +1,9 @@
-import { Client } from '@notionhq/client';
+import { Client, LogLevel } from '@notionhq/client';
 
 export const NOTION_VERSION = '2025-09-03';
 
 export function client(token) {
-  return new Client({ auth: token, notionVersion: NOTION_VERSION });
+  return new Client({ auth: token, notionVersion: NOTION_VERSION, logLevel: LogLevel.ERROR });
 }
 
 const text = (content) => [{ type: 'text', text: { content } }];
