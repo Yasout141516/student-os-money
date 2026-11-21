@@ -44,7 +44,7 @@ It extends the Student OS from the Notion Campus Leaders workshop (Courses, Assi
 
 The Notion section organises money; the add-ons **decide** things and make logging effortless.
 
-![Quick-add web app](docs/screenshots/web-app.png)
+<img src="docs/screenshots/web-app.png" alt="Quick-add web app" width="320">
 
 ### 1. Money Coach (`npm run coach`)
 Reads this month's Expenses, the Wallet totals and your Goals, then writes a **🧠 Money Coach · 21 Nov 2026** page under 💰 Money (the first insight as a callout, the rest as bullets). Rules, not AI: free, no API key, the same answer every time.
@@ -64,7 +64,7 @@ A mobile page with big buttons: **🥤 Coke ৳40** (one tap), plus 🚗 Ride, �
 - Static `public/index.html` (vanilla JS) + Vercel serverless functions in `api/` (`/api/add`, `/api/summary`, `/api/coach`).
 - **The Notion token never reaches the browser**; it lives in server env vars.
 - **PIN gate:** every `api/*` call needs header `x-pin` = `APP_PIN`, otherwise 401 and nothing is written. The page asks for the PIN once and remembers it.
-- **Live:** <https://student-os-money.vercel.app> (PIN-protected; PIN not published).
+- **Live:** <https://student-os-money.vercel.app>. **Demo PIN: `1234`** (enter it once and the page remembers it). It writes to the demo Notion workspace, so feel free to tap around.
 
 ### 3. bKash SMS paste
 Paste a bKash SMS → **Read SMS** → an editable preview (amount, name = merchant, guessed category) → **Save to Notion** with Paid With = bKash. Nothing is saved without your confirmation; an SMS it can't read shows *"Couldn't read this SMS — enter it manually"*. "Received" SMS are recognised and pointed to the Income database.
@@ -84,13 +84,13 @@ Paste a bKash SMS → **Read SMS** → an editable preview (amount, name = merch
 
 ## ➕ Extras: Can I afford it?, over-budget alerts, weekly auto-coach
 
-- **💸 Can I afford it?** Type an item and price in the web app: "✅ Yes: you'll still have ৳3,053 left this month, but Emergency fund slips by 2 weeks", or "❌ Not yet: ৳800 short. At your pace you can afford it on 28 Nov". **⭐ Add to Wishlist** saves it to a Notion **Wishlist** database (Price, Verdict, Affordable On, Checked On, Wallet) and links to the new page. The goal math is shared with the Coach. A price of ৳0 or less is rejected, and with no surplus it says "Not this month" instead of a made-up date.
-- **🚨 Over-budget alerts.** After every quick-add, the toast turns **red** when the category is over its Monthly Budget ("🚗 Rides: ৳560 over budget (137%)") and **amber** at 80% or more. In Notion, Categories gets an **Over Budget** checkbox formula, so a filtered "🚨 Over budget" view lists the problem categories. Categories with no budget are never flagged.
+- **💸 Can I afford it?** Type an item and price in the web app: "✅ Yes: you'll still have ৳2,943 left this month, but Emergency fund slips by 2 weeks", or "❌ Not yet: ৳800 short. At your pace you can afford it on 28 Nov". **⭐ Add to Wishlist** saves it to a Notion **Wishlist** database (Price, Verdict, Affordable On, Checked On, Wallet) and links to the new page. The goal math is shared with the Coach. A price of ৳0 or less is rejected, and with no surplus it says "Not this month" instead of a made-up date.
+- **🚨 Over-budget alerts.** After every quick-add, the toast turns **red** when the category is over its Monthly Budget ("🚗 Rides: ৳620 over budget (141%)") and **amber** at 80% or more. In Notion, Categories gets an **Over Budget** checkbox formula, so a filtered "🚨 Over budget" view lists the problem categories. Categories with no budget are never flagged.
 - **🗓️ Weekly auto-coach.** Vercel Cron calls `/api/cron-coach` every Monday at 03:00 UTC (9 AM Dhaka) and writes a new 🧠 Money Coach page into Notion. It only runs with `Authorization: Bearer $CRON_SECRET`; anything else gets 401 and no page is written.
 
-| Can I afford it? | Over-budget toast |
-| --- | --- |
-| ![Can I afford it](docs/screenshots/afford-check.png) | ![Over-budget toast](docs/screenshots/over-budget-toast.png) |
+| Can I afford it? | Over-budget toast | bKash SMS paste |
+| --- | --- | --- |
+| ![Can I afford it](docs/screenshots/afford-check.png) | ![Over-budget toast](docs/screenshots/over-budget-toast.png) | ![bKash SMS paste](docs/screenshots/sms-paste.png) |
 
 Verified live against Notion: the ৳2,500 "Headphones" check saved a Wishlist row (Verdict = Yes, Affordable On = 21 Nov 2026, linked to My Wallet); 🚗 Rides shows Over Budget ✓; and a cron call with the secret created a "🧠 Money Coach · 21 Nov 2026" page, while calls without it returned 401.
 
@@ -202,8 +202,6 @@ docs/screenshots/   screenshots
 
 ## Screenshots
 
-![Quick-add web app with an SMS preview](docs/screenshots/web-app.png)
-
-![Can I afford it?](docs/screenshots/afford-check.png) ![Over-budget toast](docs/screenshots/over-budget-toast.png)
-
-_Add screenshots of the Money dashboard to `docs/screenshots/` after the manual steps._
+| Home | Can I afford it? | Over-budget toast | bKash SMS paste |
+| --- | --- | --- | --- |
+| ![Home: left to spend + quick add](docs/screenshots/web-app.png) | ![Can I afford it?](docs/screenshots/afford-check.png) | ![Over-budget toast](docs/screenshots/over-budget-toast.png) | ![bKash SMS paste](docs/screenshots/sms-paste.png) |
