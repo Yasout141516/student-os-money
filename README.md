@@ -60,7 +60,7 @@ A mobile page with big buttons: **🥤 Coke ৳40** (one tap), plus 🚗 Ride, �
 - Static `public/index.html` (vanilla JS) + Vercel serverless functions in `api/` (`/api/add`, `/api/summary`, `/api/coach`).
 - **The Notion token never reaches the browser**; it lives in server env vars.
 - **PIN gate:** every `api/*` call needs header `x-pin` = `APP_PIN`, otherwise 401 and nothing is written. The page asks for the PIN once and remembers it.
-- Deployed URL: _see below_ (PIN not published).
+- **Live:** <https://student-os-money.vercel.app> (PIN-protected; PIN not published).
 
 ### 3. bKash SMS paste
 Paste a bKash SMS → **Read SMS** → an editable preview (amount, name = merchant, guessed category) → **Save to Notion** with Paid With = bKash. Nothing is saved without your confirmation; an SMS it can't read shows *"Couldn't read this SMS — enter it manually"*. "Received" SMS are recognised and pointed to the Income database.

@@ -24,7 +24,10 @@ const weeks = (months) => {
   const w = Math.max(1, Math.round(months * WEEKS_PER_MONTH));
   return `${w} week${w === 1 ? '' : 's'}`;
 };
-const oneDecimal = (n) => Math.round(n * 10) / 10;
+const months = (n) => {
+  const m = Math.round(n * 10) / 10;
+  return `${m} month${m === 1 ? '' : 's'}`;
+};
 
 export function buildInsights({ today, expenses, leftToSpend, incomeThisMonth, goals }) {
   if (!expenses.length) return ['No spending logged this month yet.'];
@@ -56,7 +59,7 @@ export function buildInsights({ today, expenses, leftToSpend, incomeThisMonth, g
         : `🎯 At current spending you won't reach ${goal.name} (${formatTaka(remaining)} to go).`);
     } else {
       const before = remaining / surplus;
-      lines.push(`🎯 ${goal.name}: ${formatTaka(remaining)} to go. At ${formatTaka(surplus)}/month that's ${oneDecimal(before)} months; with the cut it's ${oneDecimal(after)} months, ${weeks(before - after)} sooner.`);
+      lines.push(`🎯 ${goal.name}: ${formatTaka(remaining)} to go. At ${formatTaka(surplus)}/month that's ${months(before)}; with the cut it's ${months(after)}, ${weeks(before - after)} sooner.`);
     }
   }
 
