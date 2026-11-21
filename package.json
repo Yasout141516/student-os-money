@@ -10,6 +10,8 @@
   "scripts": {
     "setup": "node src/setup.js",
     "check": "node src/check-rollup.js",
+    "ids": "node src/print-ids.js",
+    "coach": "node src/coach-run.js",
     "test": "node --test"
   },
   "license": "MIT",

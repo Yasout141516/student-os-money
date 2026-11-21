@@ -3,6 +3,7 @@ import { loadConfig } from './config.js';
 import { explainNotionError } from './errors.js';
 import { FORMULAS, baseProperties, formula, relationProp, rollupSum } from './schema.js';
 import { buildSeed } from './seed.js';
+import { formatIds } from './ids.js';
 import {
   client, createPage, createDatabase, addProperties, getSyncedName, createRow, values as v,
 } from './notion.js';
@@ -75,9 +76,11 @@ async function main() {
   await addProperties(notion, ds.categories, { 'Budget Left (৳)': formula(FORMULAS.budgetLeft) });
   log('Added rollups and formulas');
 
+  let walletPageId = null;
   if (withSample) {
     const seed = buildSeed(new Date());
-    const wallet = v.relation(await createRow(notion, ds.wallet, { Name: v.title('My Wallet') }));
+    walletPageId = await createRow(notion, ds.wallet, { Name: v.title('My Wallet') });
+    const wallet = v.relation(walletPageId);
     const categoryIds = {};
     for (const c of seed.categories) {
       categoryIds[c.name] = await createRow(notion, ds.categories, {
@@ -113,6 +116,11 @@ async function main() {
 
   console.log(`\nDone! Open your Money section: ${money.url}`);
   console.log(MANUAL_STEPS);
+  console.log('\n# Add-on IDs: paste into .env and Vercel env vars');
+  console.log(formatIds({
+    EXPENSES_DS_ID: ds.expenses, CATEGORIES_DS_ID: ds.categories, GOALS_DS_ID: ds.goals,
+    WALLET_PAGE_ID: walletPageId, MONEY_PAGE_ID: money.pageId,
+  }));
 }
 
 main().catch((err) => {
