@@ -24,11 +24,15 @@ It extends the Student OS from the Notion Campus Leaders workshop (Courses, Assi
 | Database | What it holds | Key properties |
 | --- | --- | --- |
 | 👛 **Wallet** | One row, "My Wallet": the hub for monthly totals | Rollups `Spent This Month (৳)`, `Income This Month (৳)`, `Subscriptions Monthly (৳)`; formula **`Left to Spend (৳)`** |
-| 🏷️ **Categories** | 🥤 Snacks & Drinks, 🚗 Rides, 📺 Subscriptions, 🍛 Food, 📚 Study, 🎁 Other | `Monthly Budget (৳)`, rollup `Spent This Month (৳)`, formula `Budget Left (৳)` |
+| 🏷️ **Categories** | 🥤 Snacks & Drinks, 🚗 Rides, 📺 Subscriptions, 🍛 Food, 📚 Study, 🎁 Other | `Monthly Budget (৳)`, rollup `Spent This Month (৳)`, formulas `Budget Left (৳)`, `Over Budget` |
 | 💸 **Expenses** | Every purchase | `Amount (৳)`, `Date`, `Category`, `Wallet`, `Paid With` (Cash/bKash/Card), formulas `This Month`, `Amount This Month`; optional `Course` link |
 | 💵 **Income** | Pocket money, tuition, gifts | `Amount (৳)`, `Date`, `Source`, `Wallet`, `This Month`, `Amount This Month` |
 | 📺 **Subscriptions** | Renewals to remember | `Price (৳)`, `Billing` (Monthly/Yearly), `Next Renewal`, `Active`, formula `Monthly Cost` |
 | 🎯 **Goals** | Savings targets | `Target (৳)`, `Saved (৳)`, `Deadline`, formula `Progress` (0–1) |
+| ⭐ **Wishlist** | Things you want to buy (from "Can I afford it?") | `Price (৳)`, `Verdict` (Yes/Not yet), `Affordable On` (+ reminder), `Checked On`, `Wallet` |
+| 🧠 **Coach pages** | Weekly / on-demand insights | Callout + bullets, written by `npm run coach`, the app, or the Monday cron |
+
+**Notion features used:** two-way relations (everything → Wallet, Expenses → Categories), rollups (monthly totals on Wallet and Categories), formulas (`This Month`, `Left to Spend`, `Budget Left`, `Over Budget`, `Progress`, `Monthly Cost`), plus the manual steps below for buttons, charts, views and date reminders (subscription renewals, Wishlist Affordable On).
 
 **The "Wallet hub" trick:** Notion formulas can't add up values across databases. So every Expense, Income and Subscription is linked to a single "My Wallet" row through a **two-way relation**, and rollups on that row add up the month's totals. "This month" is a formula on each row (`Amount This Month` is 0 for older entries), so last month's spending never leaks into the number.
 
@@ -76,7 +80,21 @@ Paste a bKash SMS → **Read SMS** → an editable preview (amount, name = merch
    ```
    Paste them into `.env` and add `APP_PIN=<your pin>`.
 2. Try it locally: `npm run coach`, or `npm run dev` → <http://localhost:3000>.
-3. **Deploy to Vercel (free):** import the GitHub repo at <https://vercel.com/new> (framework preset: *Other*, no build command), or run `npx vercel --prod`. In **Settings → Environment Variables**, add `NOTION_TOKEN`, `APP_PIN`, `EXPENSES_DS_ID`, `CATEGORIES_DS_ID`, `GOALS_DS_ID`, `WALLET_PAGE_ID`, `MONEY_PAGE_ID`, then redeploy. Open the URL on your phone and tap 🥤.
+3. **Deploy to Vercel (free):** import the GitHub repo at <https://vercel.com/new> (framework preset: *Other*, no build command), or run `npx vercel --prod`. In **Settings → Environment Variables**, add `NOTION_TOKEN`, `APP_PIN`, `EXPENSES_DS_ID`, `CATEGORIES_DS_ID`, `GOALS_DS_ID`, `WALLET_PAGE_ID`, `MONEY_PAGE_ID` (and for the extras `WISHLIST_DS_ID`, `CRON_SECRET`), then redeploy. Open the URL on your phone and tap 🥤.
+
+## ➕ Extras: Can I afford it?, over-budget alerts, weekly auto-coach
+
+- **💸 Can I afford it?** Type an item and price in the web app: "✅ Yes: you'll still have ৳3,053 left this month, but Emergency fund slips by 2 weeks", or "❌ Not yet: ৳800 short. At your pace you can afford it on 28 Nov". **⭐ Add to Wishlist** saves it to a Notion **Wishlist** database (Price, Verdict, Affordable On, Checked On, Wallet) and links to the new page. The goal math is shared with the Coach. A price of ৳0 or less is rejected, and with no surplus it says "Not this month" instead of a made-up date.
+- **🚨 Over-budget alerts.** After every quick-add, the toast turns **red** when the category is over its Monthly Budget ("🚗 Rides: ৳560 over budget (137%)") and **amber** at 80% or more. In Notion, Categories gets an **Over Budget** checkbox formula, so a filtered "🚨 Over budget" view lists the problem categories. Categories with no budget are never flagged.
+- **🗓️ Weekly auto-coach.** Vercel Cron calls `/api/cron-coach` every Monday at 03:00 UTC (9 AM Dhaka) and writes a new 🧠 Money Coach page into Notion. It only runs with `Authorization: Bearer $CRON_SECRET`; anything else gets 401 and no page is written.
+
+| Can I afford it? | Over-budget toast |
+| --- | --- |
+| ![Can I afford it](docs/screenshots/afford-check.png) | ![Over-budget toast](docs/screenshots/over-budget-toast.png) |
+
+Verified live against Notion: the ৳2,500 "Headphones" check saved a Wishlist row (Verdict = Yes, Affordable On = 21 Nov 2026, linked to My Wallet); 🚗 Rides shows Over Budget ✓; and a cron call with the secret created a "🧠 Money Coach · 21 Nov 2026" page, while calls without it returned 401.
+
+**Extras setup (existing workspace):** run `npm run wishlist` (creates ⭐ Wishlist and prints `WISHLIST_DS_ID`) and `npm run budget-flag` (adds Over Budget to Categories). Fresh `npm run setup` runs already include Over Budget. Then add `WISHLIST_DS_ID` and `CRON_SECRET` (any random string) to `.env` and Vercel env vars and redeploy. `vercel.json` registers the cron, and one weekly cron fits the free Hobby plan.
 
 ## How I used Devin Chat
 
@@ -101,6 +119,14 @@ Design brainstorming (the problem, data model and approach) was done with **Clau
 - **Task 2:** the Money Coach (`src/coach.js`), test-first, then run against the real workspace. Devin also caught an arithmetic slip in the plan's test (avg ৳200 × 2 × 4.3 is ৳1,720, not ৳3,440) and fixed the fixture
 - **Task 3:** the PIN-gated quick-add app; verified that a 🥤 tap drops Left to Spend by ৳40 in Notion and that a missing PIN gives 401. It also worked around Notion rollups lagging a few seconds after a write
 - **Task 4:** bKash SMS parsing (`src/sms.js`) with fixtures and an in-browser preview, verified end to end (row saved with Paid With = bKash)
+
+4. *"Read `docs/superpowers/plans/2026-11-21-money-os-extras.md` and execute Tasks A, B, C, D in order, committing and pushing after each. Hard stop at 5:42 PM: push whatever passes and stop, then make sure the README (Task D) is done by 5:50. Use my existing secrets plus `CRON_SECRET`."*
+
+**Extras Devin built** (one commit per task, each deployed and checked on the live site):
+- **Task A:** `canAfford` (test-first, reusing the Coach goal math), the ⭐ Wishlist database and `POST /api/afford`
+- **Task B:** `budgetStatus`, the Over Budget formula, and red/amber toasts from `/api/add`
+- **Task C:** `checkCron` + `/api/cron-coach` + `vercel.json` cron; verified 401 without the secret and a new Coach page with it
+- **Task D:** this README section and screenshots
 
 Devin also handled the setup hiccups along the way. When I pasted the token into the page-ID secret, it told me the exact error, then waited until the page was shared with the integration before rerunning the check.
 
@@ -140,11 +166,13 @@ The Notion API can't create charts, buttons, reminders or formula bar displays, 
 ## Testing
 
 ```bash
-npm test        # unit tests (node:test): config, errors, schema, seed, coach, PIN gate, SMS parsing
+npm test        # unit tests (node:test): config, errors, schema, seed, coach, PIN gate, SMS parsing, afford, budget, cron auth
 npm run check   # live check against your Notion workspace
 ```
 
 The add-on tests cover: no expenses → one coach line; Left to Spend ≤ 0 → "won't reach" with no `Infinity`/`NaN`; `Tk 1,250.00` → 1250; an unreadable SMS → `kind: 'unknown'`, `amount: null`; and a wrong or missing PIN → 401 (`checkPin` is false when `APP_PIN` is unset).
+
+The extras tests cover: price 0 or "abc" → `ok:false` with nothing written; income ≤ spent → "Not this month" and no date; a ৳1,800 item with ৳1,000 left and a ৳100/day surplus → affordable 8 days later; budget 0 or empty → never over; and `checkCron` is false with no header, a wrong secret, or `CRON_SECRET` unset.
 
 The original tests cover the plan's review focus points: an expense with no date counts as ৳0 (not an error), a goal with Target 0 shows 0 progress (no divide-by-zero), sample dates stay within the current month whether you run it on the 1st or the 30th, and Rides is always the biggest category.
 
@@ -161,7 +189,10 @@ src/setup.js        npm run setup (builds the Money section)
 src/ids.js          finds/prints the add-on IDs (npm run ids)
 src/coach.js        Money Coach rules + Notion read/write (npm run coach)
 src/sms.js          bKash SMS parser + category guess (copied to public/sms.js)
-api/                Vercel functions: add, summary, coach (+ _auth.js PIN gate)
+src/budget.js       budgetStatus (over-budget alerts)
+src/add-wishlist.js npm run wishlist; src/add-budget-flag.js npm run budget-flag
+api/                Vercel functions: add, summary, coach, afford, cron-coach (+ _auth.js PIN/cron gates)
+vercel.json         weekly cron (Mondays 03:00 UTC)
 public/index.html   mobile quick-add web app
 dev-server.js       local stand-in for Vercel (npm run dev)
 test/               node:test unit tests
@@ -172,5 +203,7 @@ docs/screenshots/   screenshots
 ## Screenshots
 
 ![Quick-add web app with an SMS preview](docs/screenshots/web-app.png)
+
+![Can I afford it?](docs/screenshots/afford-check.png) ![Over-budget toast](docs/screenshots/over-budget-toast.png)
 
 _Add screenshots of the Money dashboard to `docs/screenshots/` after the manual steps._
