@@ -73,7 +73,7 @@ async function main() {
     'Spent This Month (৳)': rollupSum('Expenses', 'Amount This Month'),
   });
   await addProperties(notion, ds.wallet, { 'Left to Spend (৳)': formula(FORMULAS.leftToSpend) });
-  await addProperties(notion, ds.categories, { 'Budget Left (৳)': formula(FORMULAS.budgetLeft) });
+  await addProperties(notion, ds.categories, { 'Budget Left (৳)': formula(FORMULAS.budgetLeft), 'Over Budget': formula(FORMULAS.overBudget) });
   log('Added rollups and formulas');
 
   let walletPageId = null;

@@ -30,6 +30,7 @@
   #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:12px 18px; border-radius:10px; max-width:90%; opacity:0; transition:opacity .2s; pointer-events:none; }
   #toast.show { opacity:1; }
   #toast.err { background:var(--bad); }
+  #toast.warn { background:#d9730d; }
   a { color:inherit; }
 </style>
 </head>
@@ -125,8 +126,9 @@ function pin() {
 let toastTimer;
 function toast(msg, err = false) {
   const t = $('toast');
-  t.textContent = msg; t.className = `show${err ? ' err' : ''}`;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.className = ''), 3000);
+  const kind = err === true ? 'err' : err || '';
+  t.textContent = msg; t.className = `show ${kind}`;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.className = ''), kind ? 5000 : 3000);
 }
 
 async function api(path, body) {
@@ -161,7 +163,10 @@ async function add(item) {
   try {
     const r = await api('add', item);
     showLeft(r.leftToSpend);
-    toast(`Added ${item.label ?? item.name} ${taka(item.amount)}`);
+    const b = r.budget;
+    if (b?.over) toast(`${b.category}: ${taka(b.overBy)} over budget (${b.pct}%)`, 'err');
+    else if (b?.pct >= 80) toast(`${b.category}: ${b.pct}% of budget used`, 'warn');
+    else toast(`Added ${item.label ?? item.name} ${taka(item.amount)}`);
     setTimeout(refresh, 6000);
     return true;
   } catch (e) { toast(e.message, true); return false; }

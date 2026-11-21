@@ -4,6 +4,7 @@ export const FORMULAS = {
   monthlyCost: 'if(!prop("Active"), 0, if(prop("Billing") == "Yearly", prop("Price (৳)") / 12, prop("Price (৳)")))',
   progress: 'if(prop("Target (৳)") > 0, min(prop("Saved (৳)") / prop("Target (৳)"), 1), 0)',
   budgetLeft: 'prop("Monthly Budget (৳)") - prop("Spent This Month (৳)")',
+  overBudget: 'if(prop("Monthly Budget (৳)") > 0, prop("Spent This Month (৳)") > prop("Monthly Budget (৳)"), false)',
   leftToSpend: 'prop("Income This Month (৳)") - prop("Spent This Month (৳)")',
 };
 

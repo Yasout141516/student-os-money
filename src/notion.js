@@ -90,7 +90,7 @@ export async function addExpense(notion, ids, { name, amount, category, paidWith
   };
   if (paidWith) properties['Paid With'] = values.select(paidWith);
   await createRow(notion, ids.EXPENSES_DS_ID, properties);
-  return { ok: true };
+  return { ok: true, category: cats.results[0] };
 }
 
 export async function readSummary(notion, ids) {

@@ -134,6 +134,8 @@ The Notion API can't create charts, buttons, reminders or formula bar displays, 
 5. **Reminders:** on each subscription's **Next Renewal** date, add a reminder 1 day before. On Notion Education Plus, you can use a database automation instead.
 6. **Views:** Subscriptions → add a **Calendar** view (by Next Renewal). Goals → add a **Gallery** view.
 7. **Progress bars:** Goals → `Progress` property → **Show as: Bar** (also optional for Wallet's Left to Spend).
+8. **🚨 Over budget view:** on the 💰 Money dashboard, add a linked view of **Categories** named "🚨 Over budget", filtered to **Over Budget** is checked (existing workspaces: run `npm run budget-flag` once to add the formula).
+9. **Wishlist reminders:** on ⭐ Wishlist → **Affordable On**, add a reminder (e.g. 9 AM on the day) so Notion tells you when an item becomes affordable.
 
 ## Testing
 

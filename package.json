@@ -14,7 +14,8 @@
     "coach": "node src/coach-run.js",
     "dev": "node dev-server.js",
     "test": "node --test",
-    "wishlist": "node src/add-wishlist.js"
+    "wishlist": "node src/add-wishlist.js",
+    "budget-flag": "node src/add-budget-flag.js"
   },
   "license": "MIT",
   "dependencies": {
