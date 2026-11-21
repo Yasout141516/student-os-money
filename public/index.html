@@ -5,95 +5,128 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>💰 Money OS</title>
 <style>
-  :root { --bg:#f7f6f3; --card:#fff; --ink:#37352f; --muted:#787774; --line:#e9e9e7; --ok:#0f7b6c; --bad:#e03e3e; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
-  main { max-width:480px; margin:0 auto; padding:20px 16px 80px; }
-  h1 { font-size:22px; margin:0 0 12px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
-  .label { color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
-  .big { font-size:40px; font-weight:700; margin-top:4px; }
-  .big.neg { color:var(--bad); }
+  :root {
+    --bg:#f4f5f9; --card:#fff; --ink:#1d1f2b; --muted:#6b7080; --line:#e6e8ef;
+    --brand:#4f46e5; --brand2:#7c3aed; --ok:#0f9d76; --bad:#e5484d; --warn:#f08c00;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.06);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font:16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:480px; margin:0 auto; padding:16px 16px calc(96px + env(safe-area-inset-bottom)); }
+  header { display:flex; align-items:center; justify-content:space-between; margin:4px 2px 14px; }
+  h1 { font-size:20px; margin:0; letter-spacing:-.01em; }
+  .pill { font-size:12px; font-weight:600; color:var(--muted); background:#fff; border:1px solid var(--line); border-radius:999px; padding:5px 10px; }
+  .hero { background:linear-gradient(135deg, var(--brand), var(--brand2)); color:#fff; border-radius:22px; padding:20px; margin-bottom:16px; box-shadow:0 10px 30px rgba(79,70,229,.30); }
+  .hero .label { color:rgba(255,255,255,.8); }
+  .hero .big { font-size:46px; font-weight:800; letter-spacing:-.02em; margin:2px 0 12px; font-variant-numeric:tabular-nums; }
+  .hero .big.neg { color:#ffd0d2; }
+  .bar { height:8px; background:rgba(255,255,255,.25); border-radius:99px; overflow:hidden; }
+  .bar > i { display:block; height:100%; width:0; background:#fff; border-radius:99px; transition:width .5s ease; }
+  .bar.hot > i { background:#ffb4b6; }
+  .hero .sub { color:rgba(255,255,255,.85); display:flex; justify-content:space-between; margin-top:8px; font-size:13px; }
+  .card { background:var(--card); border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:var(--shadow); }
+  .label { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+  .card-title { font-size:16px; font-weight:700; margin:0 0 12px; display:flex; align-items:center; gap:8px; }
   .sub { color:var(--muted); font-size:14px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  button { font:inherit; border:1px solid var(--line); background:var(--card); border-radius:12px; padding:18px 10px; font-size:18px; font-weight:600; cursor:pointer; }
-  button:active { transform:scale(.97); background:#f1f1ef; }
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  #buttons button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:14px 6px; min-height:84px; font-size:14px; font-weight:600; border-radius:16px; background:#f7f7fb; border:1px solid var(--line); }
+  #buttons button .em { font-size:28px; line-height:1; }
+  #buttons button .amt { font-size:12px; color:var(--muted); font-weight:600; }
+  #buttons button.fixed { background:#eef0ff; border-color:#d9dcff; }
+  button { font:inherit; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:14px; padding:14px 12px; font-size:16px; font-weight:600; cursor:pointer; transition:transform .08s, background .15s; }
+  button:active { transform:scale(.96); }
+  button:disabled { opacity:.6; }
   button.primary { background:var(--ink); color:#fff; border-color:var(--ink); }
-  button.wide { grid-column:1 / -1; }
-  input, select, textarea { font:inherit; width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:18px; background:#fff; }
-  textarea { font-size:15px; min-height:110px; }
+  button.brand { background:var(--brand); color:#fff; border-color:var(--brand); }
+  input, select, textarea { font:inherit; width:100%; padding:13px 14px; border:1px solid var(--line); border-radius:12px; font-size:17px; background:#fafafd; color:var(--ink); outline:none; transition:border-color .15s, box-shadow .15s; }
+  input:focus, select:focus, textarea:focus { border-color:var(--brand); box-shadow:0 0 0 3px rgba(79,70,229,.15); background:#fff; }
+  textarea { font-size:14px; min-height:96px; resize:vertical; }
   .row { display:flex; gap:10px; margin-top:10px; }
   .row > * { flex:1; }
   .hidden { display:none !important; }
-  ul { padding-left:20px; margin:8px 0 0; }
-  li { margin:6px 0; }
-  #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:12px 18px; border-radius:10px; max-width:90%; opacity:0; transition:opacity .2s; pointer-events:none; }
-  #toast.show { opacity:1; }
+  .panel { margin-top:12px; padding:12px; border-radius:14px; background:#f7f7fb; }
+  .verdict { padding:12px 14px; border-radius:12px; font-weight:600; background:#f1f2f6; }
+  .verdict.yes { background:#e6f7f1; color:#0b6b51; }
+  .verdict.no { background:#fdecec; color:#a32025; }
+  ul.coach { list-style:none; padding:0; margin:12px 0 0; }
+  ul.coach li { padding:10px 12px; margin:8px 0; background:#f7f7fb; border-radius:12px; font-size:14px; }
+  ul.coach li:first-child { background:#fff7db; font-weight:600; }
+  #toast { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translate(-50%, 12px); background:var(--ink); color:#fff; padding:13px 18px; border-radius:14px; max-width:92%; width:max-content; font-weight:600; font-size:15px; opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,.2); z-index:10; }
+  #toast.show { opacity:1; transform:translate(-50%, 0); }
   #toast.err { background:var(--bad); }
-  #toast.warn { background:#d9730d; }
-  a { color:inherit; }
+  #toast.warn { background:var(--warn); }
+  a { color:var(--brand); font-weight:600; text-decoration:none; }
+  .foot { text-align:center; margin-top:6px; }
+  .foot a { color:var(--muted); font-weight:500; font-size:13px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>💰 Money OS</h1>
+  <header>
+    <h1>💰 Money OS</h1>
+    <span class="pill" id="month"></span>
+  </header>
 
-  <div class="card">
-    <div class="label">Left to Spend this month</div>
+  <section class="hero">
+    <div class="label">Left to spend this month</div>
     <div class="big" id="left">…</div>
-    <div class="sub" id="spent"></div>
-  </div>
+    <div class="bar" id="bar"><i></i></div>
+    <div class="sub"><span id="spent"></span><span id="pct"></span></div>
+  </section>
 
-  <div class="card">
-    <div class="label" style="margin-bottom:10px">Quick add</div>
+  <section class="card">
+    <h2 class="card-title">⚡ Quick add</h2>
     <div class="grid" id="buttons"></div>
-    <div id="amountPanel" class="hidden" style="margin-top:12px">
+    <div id="amountPanel" class="hidden panel">
       <div class="sub" id="amountTitle"></div>
       <div class="row">
         <input id="amount" type="number" inputmode="numeric" min="1" placeholder="Amount ৳">
       </div>
       <div class="row">
         <button id="cancelAmount">Cancel</button>
-        <button id="saveAmount" class="primary">Add</button>
+        <button id="saveAmount" class="brand">Add</button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="card">
-    <div class="label" style="margin-bottom:10px">📩 Paste bKash SMS</div>
+  <section class="card">
+    <h2 class="card-title">💸 Can I afford it?</h2>
+    <div class="row" style="margin-top:0"><input id="affItem" placeholder="What is it? e.g. Headphones"></div>
+    <div class="row">
+      <input id="affPrice" type="number" inputmode="numeric" min="1" placeholder="Price ৳">
+      <button id="affCheck" class="primary" style="flex:0 0 96px">Check</button>
+    </div>
+    <div id="affResult" class="hidden" style="margin-top:12px">
+      <div id="affLine" class="verdict"></div>
+      <div class="row"><button id="affSave">⭐ Add to Wishlist</button></div>
+      <div class="sub" id="affLink" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">📩 Paste bKash SMS</h2>
     <textarea id="smsText" placeholder="You have paid Tk 250.00 to Pathao Ltd. Fee Tk 0.00. TrxID …"></textarea>
     <div class="row"><button id="readSms">Read SMS</button></div>
-    <div id="smsPreview" class="hidden" style="margin-top:12px">
+    <div id="smsPreview" class="hidden panel">
       <div class="sub" id="smsNote"></div>
       <div class="row"><input id="smsAmount" type="number" inputmode="decimal" min="1" placeholder="Amount ৳"></div>
       <div class="row"><input id="smsName" placeholder="What was it?"></div>
       <div class="row"><select id="smsCategory"></select></div>
       <div class="row">
         <button id="smsCancel">Cancel</button>
-        <button id="smsSave" class="primary">Save to Notion</button>
+        <button id="smsSave" class="brand">Save to Notion</button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="card">
-    <div class="label" style="margin-bottom:10px">💸 Can I afford it?</div>
-    <div class="row"><input id="affItem" placeholder="What is it? (e.g. Headphones)"></div>
-    <div class="row"><input id="affPrice" type="number" inputmode="numeric" min="1" placeholder="Price ৳"></div>
-    <div class="row"><button id="affCheck" class="primary">Check</button></div>
-    <div id="affResult" class="hidden" style="margin-top:12px">
-      <div id="affLine" style="font-weight:600"></div>
-      <div class="row"><button id="affSave">⭐ Add to Wishlist</button></div>
-      <div class="sub" id="affLink"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <button id="coachBtn" class="wide" style="width:100%">🧠 Refresh coach</button>
-    <ul id="coachLines"></ul>
+  <section class="card">
+    <h2 class="card-title">🧠 Money Coach</h2>
+    <button id="coachBtn" class="primary" style="width:100%">🧠 Refresh coach</button>
+    <ul id="coachLines" class="coach"></ul>
     <div class="sub" id="coachLink"></div>
-  </div>
+  </section>
 
-  <div class="sub" style="text-align:center"><a href="#" id="resetPin">Change PIN</a></div>
+  <div class="foot"><a href="#" id="resetPin">Change PIN</a></div>
 </main>
 <div id="toast"></div>
 
@@ -146,10 +179,18 @@ async function api(path, body) {
   return data;
 }
 
+let lastSpent, lastIncome;
 function showLeft(left, spent) {
   $('left').textContent = taka(left);
   $('left').classList.toggle('neg', left < 0);
-  if (spent !== undefined) $('spent').textContent = `Spent so far: ${taka(spent)}`;
+  if (spent !== undefined) { lastSpent = spent; lastIncome = spent + left; }
+  else if (lastIncome !== undefined) lastSpent = lastIncome - left;
+  if (lastSpent === undefined) return;
+  const pct = lastIncome > 0 ? Math.round((lastSpent / lastIncome) * 100) : 100;
+  $('spent').textContent = `Spent ${taka(lastSpent)}`;
+  $('pct').textContent = `${pct}% of ${taka(lastIncome)} income`;
+  $('bar').firstElementChild.style.width = `${Math.min(pct, 100)}%`;
+  $('bar').classList.toggle('hot', pct >= 80);
 }
 
 async function refresh() {
@@ -176,7 +217,10 @@ async function add(item) {
 let pending = null;
 for (const b of BUTTONS) {
   const el = document.createElement('button');
-  el.textContent = b.label;
+  const [em, ...rest] = b.label.split(' ');
+  const txt = rest.join(' ').replace(/\s*৳\d+$/, '');
+  el.innerHTML = `<span class="em">${em}</span><span>${txt}</span>${b.amount ? `<span class="amt">৳${b.amount}</span>` : ''}`;
+  if (b.amount) el.classList.add('fixed');
   el.onclick = () => {
     if (b.amount) return add({ name: b.name, category: b.category, amount: b.amount, label: '🥤 Coke' });
     pending = b;
@@ -215,6 +259,7 @@ $('affCheck').onclick = async () => {
   try {
     const r = await api('afford', { item: $('affItem').value, price });
     $('affLine').textContent = r.line;
+    $('affLine').className = `verdict ${r.verdict || 'no'}`;
     $('affResult').classList.remove('hidden');
     $('affSave').classList.toggle('hidden', !r.verdict);
   } catch (e) { toast(e.message, true); }
@@ -263,6 +308,7 @@ $('smsSave').onclick = async () => {
   }
 };
 
+$('month').textContent = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 refresh();
 </script>
 </body>
