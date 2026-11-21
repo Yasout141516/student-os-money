@@ -36,6 +36,48 @@ It extends the Student OS from the Notion Campus Leaders workshop (Courses, Assi
 
 **Optional Courses link:** set `NOTION_COURSES_DB_ID` and expenses get a one-way `Course` relation to your existing Student OS Courses database (e.g. printing or a textbook for CSE220). Your Courses database isn't modified.
 
+## 🧠 Smart add-ons: Coach, phone quick-add, bKash SMS
+
+The Notion section organises money; the add-ons **decide** things and make logging effortless.
+
+![Quick-add web app](docs/screenshots/web-app.png)
+
+### 1. Money Coach (`npm run coach`)
+Reads this month's Expenses, the Wallet totals and your Goals, then writes a **🧠 Money Coach · 21 Nov 2026** page under 💰 Money (the first insight as a callout, the rest as bullets). Rules, not AI: free, no API key, the same answer every time.
+
+Sample output for the seeded month:
+- 🚗 Rides is your top drain: 47% of spending (৳1,790 of ৳3,798).
+- 🥤 Snacks & Drinks: 6 buys so far, ৳270. Small, but it adds up.
+- Your average ride costs ৳224. Skipping 2 rides a week saves about ৳1,924/month.
+- 🎯 Emergency fund: ৳7,500 to go. At ৳6,202/month that's 1.2 months; with the cut it's 0.9 months, 1 week sooner.
+- 📈 At this pace you'll spend ৳5,426 this month: on track with your ৳10,000 income.
+
+Edge cases: no expenses → "No spending logged this month yet."; Left to Spend ≤ 0 → "At current spending you won't reach …" (no divide-by-zero); finished or missing goals are skipped.
+
+### 2. Quick-add web app (phone)
+A mobile page with big buttons: **🥤 Coke ৳40** (one tap), plus 🚗 Ride, 🍛 Food, 📚 Study and 🎁 Other (number keypad for the amount). It shows **Left to Spend** from the Wallet, and a **🧠 Refresh coach** button runs the coach from your phone. Each tap creates an Expense in Notion (Date today, Category and Wallet set), so the dashboard updates live.
+
+- Static `public/index.html` (vanilla JS) + Vercel serverless functions in `api/` (`/api/add`, `/api/summary`, `/api/coach`).
+- **The Notion token never reaches the browser**; it lives in server env vars.
+- **PIN gate:** every `api/*` call needs header `x-pin` = `APP_PIN`, otherwise 401 and nothing is written. The page asks for the PIN once and remembers it.
+- Deployed URL: _see below_ (PIN not published).
+
+### 3. bKash SMS paste
+Paste a bKash SMS → **Read SMS** → an editable preview (amount, name = merchant, guessed category) → **Save to Notion** with Paid With = bKash. Nothing is saved without your confirmation; an SMS it can't read shows *"Couldn't read this SMS — enter it manually"*. "Received" SMS are recognised and pointed to the Income database.
+
+- `parseSms(text)` → `{amount, merchant, trxId, kind}` handles `Tk` / `৳` / `BDT`, comma amounts (`Tk 1,250.00` → 1250), "You have paid", "Payment", "Send Money", "Cash Out" and "received".
+- `guessCategory(merchant)`: Pathao/Uber/Obhai/Shohoz → 🚗 Rides; Foodpanda/Pathao Food/KFC/cafe → 🍛 Food; Spotify/Netflix/YouTube/Google/ChatGPT → 📺 Subscriptions; else 🎁 Other.
+- Parsing runs in the browser (`public/sms.js` is a tested copy of `src/sms.js`). Fixtures live in `test/fixtures/sms.txt`.
+
+### Add-on setup
+1. Get the IDs of your existing Money section (setup also prints them at the end):
+   ```bash
+   npm run ids     # prints EXPENSES_DS_ID, CATEGORIES_DS_ID, GOALS_DS_ID, WALLET_PAGE_ID, MONEY_PAGE_ID
+   ```
+   Paste them into `.env` and add `APP_PIN=<your pin>`.
+2. Try it locally: `npm run coach`, or `npm run dev` → <http://localhost:3000>.
+3. **Deploy to Vercel (free):** import the GitHub repo at <https://vercel.com/new> (framework preset: *Other*, no build command), or run `npx vercel --prod`. In **Settings → Environment Variables**, add `NOTION_TOKEN`, `APP_PIN`, `EXPENSES_DS_ID`, `CATEGORIES_DS_ID`, `GOALS_DS_ID`, `WALLET_PAGE_ID`, `MONEY_PAGE_ID`, then redeploy. Open the URL on your phone and tap 🥤.
+
 ## How I used Devin Chat
 
 Design brainstorming (the problem, data model and approach) was done with **Claude**, producing a written spec and a task-by-task plan, both in [`docs/superpowers/`](docs/superpowers). **Devin** then built the whole project from the chat:
@@ -51,6 +93,14 @@ Design brainstorming (the problem, data model and approach) was done with **Clau
 - **Task 4:** realistic, month-safe sample data (`src/seed.js`), tested for the 1st and the 30th of a month
 - **Task 5:** `npm run setup`, run against my real workspace and verified (Left to Spend ৳6,202 = ৳10,000 − ৳3,798; Rides is the biggest category)
 - **Task 6:** this README
+
+3. *"Read `docs/superpowers/specs/2026-11-21-money-os-smart-addons-design.md`, then execute `docs/superpowers/plans/2026-11-21-money-os-smart-addons.md` task by task, committing after each. Tasks are in priority order; if time gets short, finish the current task, push, and stop. Use my existing Notion secrets, plus `APP_PIN` as a new secret. Keep it simple: this is a hackathon build due at 6 PM."*
+
+**Add-ons Devin built** (again one commit per task):
+- **Task 1:** `npm run ids` finds the existing Money section and prints the IDs the add-ons need
+- **Task 2:** the Money Coach (`src/coach.js`), test-first, then run against the real workspace. Devin also caught an arithmetic slip in the plan's test (avg ৳200 × 2 × 4.3 is ৳1,720, not ৳3,440) and fixed the fixture
+- **Task 3:** the PIN-gated quick-add app; verified that a 🥤 tap drops Left to Spend by ৳40 in Notion and that a missing PIN gives 401. It also worked around Notion rollups lagging a few seconds after a write
+- **Task 4:** bKash SMS parsing (`src/sms.js`) with fixtures and an in-browser preview, verified end to end (row saved with Paid With = bKash)
 
 Devin also handled the setup hiccups along the way. When I pasted the token into the page-ID secret, it told me the exact error, then waited until the page was shared with the integration before rerunning the check.
 
@@ -88,11 +138,13 @@ The Notion API can't create charts, buttons, reminders or formula bar displays, 
 ## Testing
 
 ```bash
-npm test        # unit tests (node:test): config, error messages, schema, sample data
+npm test        # unit tests (node:test): config, errors, schema, seed, coach, PIN gate, SMS parsing
 npm run check   # live check against your Notion workspace
 ```
 
-The tests cover the plan's review focus points: an expense with no date counts as ৳0 (not an error), a goal with Target 0 shows 0 progress (no divide-by-zero), sample dates stay within the current month whether you run it on the 1st or the 30th, and Rides is always the biggest category.
+The add-on tests cover: no expenses → one coach line; Left to Spend ≤ 0 → "won't reach" with no `Infinity`/`NaN`; `Tk 1,250.00` → 1250; an unreadable SMS → `kind: 'unknown'`, `amount: null`; and a wrong or missing PIN → 401 (`checkPin` is false when `APP_PIN` is unset).
+
+The original tests cover the plan's review focus points: an expense with no date counts as ৳0 (not an error), a goal with Target 0 shows 0 progress (no divide-by-zero), sample dates stay within the current month whether you run it on the 1st or the 30th, and Rides is always the biggest category.
 
 ## Project structure
 
@@ -104,11 +156,19 @@ src/seed.js         sample data (month-safe dates)
 src/notion.js       thin wrappers over @notionhq/client (Notion-Version 2025-09-03, data sources)
 src/check-rollup.js npm run check (feasibility check, cleans up after itself)
 src/setup.js        npm run setup (builds the Money section)
+src/ids.js          finds/prints the add-on IDs (npm run ids)
+src/coach.js        Money Coach rules + Notion read/write (npm run coach)
+src/sms.js          bKash SMS parser + category guess (copied to public/sms.js)
+api/                Vercel functions: add, summary, coach (+ _auth.js PIN gate)
+public/index.html   mobile quick-add web app
+dev-server.js       local stand-in for Vercel (npm run dev)
 test/               node:test unit tests
 docs/superpowers/   design spec and implementation plan
 docs/screenshots/   screenshots
 ```
 
 ## Screenshots
+
+![Quick-add web app with an SMS preview](docs/screenshots/web-app.png)
 
 _Add screenshots of the Money dashboard to `docs/screenshots/` after the manual steps._
