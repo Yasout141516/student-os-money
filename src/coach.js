@@ -20,10 +20,12 @@ const byCategory = (expenses) => {
   return [...m.values()];
 };
 
+export const weekCount = (months) => Math.max(1, Math.round(months * WEEKS_PER_MONTH));
 const weeks = (months) => {
-  const w = Math.max(1, Math.round(months * WEEKS_PER_MONTH));
+  const w = weekCount(months);
   return `${w} week${w === 1 ? '' : 's'}`;
 };
+export const openGoal = (goals = []) => goals.find((g) => g.target > 0 && g.saved < g.target);
 const months = (n) => {
   const m = Math.round(n * 10) / 10;
   return `${m} month${m === 1 ? '' : 's'}`;
@@ -48,7 +50,7 @@ export function buildInsights({ today, expenses, leftToSpend, incomeThisMonth, g
   const what = isRides ? 'rides' : `${cutCat.name} buys`;
   lines.push(`Your average ${isRides ? 'ride' : `${cutCat.name} buy`} costs ${formatTaka(avg)}. Skipping ${CUTS_PER_WEEK} ${what} a week saves about ${formatTaka(cut)}/month.`);
 
-  const goal = goals.find((g) => g.target > 0 && g.saved < g.target);
+  const goal = openGoal(goals);
   if (goal) {
     const remaining = goal.target - goal.saved;
     const surplus = Math.max(leftToSpend, 0);
@@ -130,4 +132,27 @@ export async function runCoach(notion, ids, today = new Date()) {
   const lines = buildInsights(data);
   const url = await writeCoachPage(notion, ids.MONEY_PAGE_ID, lines, today);
   return { lines, url };
+}
+
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+export function canAfford({ price, leftToSpend, incomeThisMonth, spentThisMonth, goals = [], today = new Date() }) {
+  const p = Number(price);
+  if (price === '' || price == null || !Number.isFinite(p) || p <= 0) return { ok: false, reason: 'Enter a price above ৳0' };
+  if (p <= leftToSpend) {
+    const goal = openGoal(goals);
+    const slip = goal ? weeks(p / Math.max(leftToSpend, 1)) : '';
+    return {
+      ok: true, verdict: 'yes', affordableOn: ymd(today), goalDelayWeeks: goal ? weekCount(p / Math.max(leftToSpend, 1)) : null,
+      line: `✅ Yes: you'll still have ${formatTaka(leftToSpend - p)} left this month${goal ? `, but ${goal.name} slips by ${slip}` : ''}.`,
+    };
+  }
+  const shortfall = p - Math.max(leftToSpend, 0);
+  const daily = (incomeThisMonth - spentThisMonth) / today.getDate();
+  if (daily > 0 && Number.isFinite(daily)) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + Math.ceil(shortfall / daily));
+    return { ok: true, verdict: 'no', affordableOn: ymd(d), goalDelayWeeks: null,
+      line: `❌ Not yet: ${formatTaka(shortfall)} short. At your pace you can afford it on ${d.getDate()} ${MON[d.getMonth()]}.` };
+  }
+  return { ok: true, verdict: 'no', affordableOn: null, goalDelayWeeks: null, line: `❌ Not this month: ${formatTaka(shortfall)} short.` };
 }

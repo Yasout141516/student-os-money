@@ -75,6 +75,18 @@
   </div>
 
   <div class="card">
+    <div class="label" style="margin-bottom:10px">💸 Can I afford it?</div>
+    <div class="row"><input id="affItem" placeholder="What is it? (e.g. Headphones)"></div>
+    <div class="row"><input id="affPrice" type="number" inputmode="numeric" min="1" placeholder="Price ৳"></div>
+    <div class="row"><button id="affCheck" class="primary">Check</button></div>
+    <div id="affResult" class="hidden" style="margin-top:12px">
+      <div id="affLine" style="font-weight:600"></div>
+      <div class="row"><button id="affSave">⭐ Add to Wishlist</button></div>
+      <div class="sub" id="affLink"></div>
+    </div>
+  </div>
+
+  <div class="card">
     <button id="coachBtn" class="wide" style="width:100%">🧠 Refresh coach</button>
     <ul id="coachLines"></ul>
     <div class="sub" id="coachLink"></div>
@@ -190,6 +202,30 @@ $('coachBtn').onclick = async () => {
     $('coachLink').appendChild(a);
   } catch (e) { toast(e.message, true); }
   finally { $('coachBtn').disabled = false; $('coachBtn').textContent = '🧠 Refresh coach'; }
+};
+$('affCheck').onclick = async () => {
+  const price = Number($('affPrice').value);
+  if (!(price > 0)) return toast('Enter a price above ৳0', true);
+  $('affLink').innerHTML = '';
+  try {
+    const r = await api('afford', { item: $('affItem').value, price });
+    $('affLine').textContent = r.line;
+    $('affResult').classList.remove('hidden');
+    $('affSave').classList.toggle('hidden', !r.verdict);
+  } catch (e) { toast(e.message, true); }
+};
+$('affSave').onclick = async () => {
+  const price = Number($('affPrice').value);
+  if (!(price > 0)) return toast('Enter a price above ৳0', true);
+  $('affSave').disabled = true;
+  try {
+    const r = await api('afford', { item: $('affItem').value || 'Wishlist item', price, save: true });
+    $('affLine').textContent = r.line;
+    const a = document.createElement('a'); a.href = r.url; a.target = '_blank'; a.textContent = 'Saved to Wishlist: open in Notion →';
+    $('affLink').innerHTML = ''; $('affLink').appendChild(a);
+    toast('⭐ Added to Wishlist');
+  } catch (e) { toast(e.message, true); }
+  finally { $('affSave').disabled = false; }
 };
 $('resetPin').onclick = (e) => { e.preventDefault(); store.clear(); pin(); refresh(); };
 

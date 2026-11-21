@@ -13,7 +13,8 @@
     "ids": "node src/print-ids.js",
     "coach": "node src/coach-run.js",
     "dev": "node dev-server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "wishlist": "node src/add-wishlist.js"
   },
   "license": "MIT",
   "dependencies": {

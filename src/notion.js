@@ -101,3 +101,18 @@ export async function readSummary(notion, ids) {
     spentThisMonth: num(wallet.properties['Spent This Month (৳)']),
   };
 }
+
+export async function addWishlistItem(notion, ids, { item, price, verdict, affordableOn }) {
+  const page = await notion.pages.create({
+    parent: { type: 'data_source_id', data_source_id: ids.WISHLIST_DS_ID },
+    properties: {
+      Item: values.title(String(item || 'Wishlist item').slice(0, 100)),
+      'Price (৳)': values.number(Number(price)),
+      Verdict: values.select(verdict === 'yes' ? 'Yes' : 'Not yet'),
+      'Affordable On': affordableOn ? values.date(affordableOn) : { date: null },
+      'Checked On': values.date(todayIn()),
+      Wallet: values.relation(ids.WALLET_PAGE_ID),
+    },
+  });
+  return page.url;
+}
