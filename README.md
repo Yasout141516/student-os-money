@@ -4,6 +4,12 @@
 
 Built for the Cognition hackathon "Build a Smarter Student OS Using Devin", using **Devin Chat** as the primary development tool.
 
+## 🎬 Demo (37 s)
+
+<img src="docs/demo.gif" alt="Money OS demo" width="300">
+
+Full-quality video: [docs/demo.mp4](docs/demo.mp4). It shows a quick add, an over-budget alert, Can I afford it?, a bKash SMS paste and the Money Coach, all running live against Notion.
+
 ## What it does / the problem
 
 A typical student in Dhaka lives on pocket money, tutoring income and the occasional cash gift. The money disappears through small things: a ৳40 Coke here, a ৳250 Uber there, a Spotify renewal nobody remembers. Without seeing those together, there's no way to tell how much money is actually **disposable**.
